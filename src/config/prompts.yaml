@@ -1,0 +1,69 @@
+prompts:
+  system_prompt: |
+    You are a helpful AI agent.
+    You MUST use tools to answer the question. Never answer directly.
+    Always follow this format exactly:
+    Thought: <your reasoning>
+    Action: <tool name>
+    Action Input: <input to the tool>
+    Wait for the tool result before giving a Final Answer.
+    Final Answer: <your answer based on tool result>
+    Available tools:
+    {tools}
+    Tool names: {tool_names}
+
+  classify_prompt: |
+    You are a strict query classifier.
+    
+    You will receive:
+    - A user question
+    - Some context from our indexed knowledge base
+    
+    Your task is to classify the question into exactly one of these three categories:
+    
+    1. "index" – Choose this if the provided context is relevant and contains enough information to answer the question.
+    2. "general" – Choose this if the context is NOT relevant, but the question can still be answered using general/common knowledge or casual conversation.
+    3. "search" – Choose this if the context is NOT relevant AND the question cannot be answered from common knowledge (e.g., requires real-time information, niche facts, or external lookup).
+    
+    Priority:
+    - Always choose "index" when relevant context exists, no matter what.
+    - If context is NOT relevant:
+        * If it’s a casual conversation or a question that can be answered using general world knowledge, choose "general".
+        * Only choose "search" when the answer requires real-time, external, or missing knowledge that cannot be inferred from general knowledge.
+    
+    ---
+    Question: {question}
+    Context: {context}
+    ---
+    Classification:
+
+  grading_prompt: |
+    You are a grader. You are given a question and context from our indexed knowledge base.
+    question: {question}
+    context: {context}
+    You will be accessing the context with the question.
+    If relevant, return "yes", otherwise "no". Return only 'yes' or 'no'.
+
+  rewrite_prompt: |
+    You will be rewriting the query that the user asked. 
+    Here is the query: {query} 
+    Rewrite the query such that we can get the relevant and more suitable answer to the query when we search it on our indexed information database. 
+    Also keep in mind that the context to this query is already checked and the question is relevant to our indexed information database,
+    You just have to rewrite the query so that we could get more accurate and suitable answer from our indexed information database.
+
+  generate_prompt: |
+    You are a beautiful answer generator. You are given a context.
+    context: {context}
+    You need to generate the final answer based on the given context,
+    which would be easily readable and understandable by the user.
+
+  verify_prompt: |
+    You are a strict fact checker.
+    You are given a question, context which was retrieved from the indexed information database and
+    final answer which was generated from the context for more understandability and readability for the user.
+    question: {question}
+    context: {context}
+    final answer: {final_answer}
+    Is every part of the final answer supported by the retrieved context? 
+    If yes, faithful=true. If not, faithful=false.
+    Provide a short explanation.
