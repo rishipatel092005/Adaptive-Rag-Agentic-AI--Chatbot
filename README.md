@@ -543,12 +543,6 @@ A: Yes, remove Tavily dependency. Queries will use index or general LLM only.
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 📈 Project Status
 
 - ✅ Core RAG pipeline implemented
@@ -572,8 +566,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Analytics dashboard
 - [ ] Cost optimization
 
----
-
-**Last Updated**: March 5, 2026  
-**Status**: ✅ Production Ready  
-**Documentation**: ✅ Comprehensive
