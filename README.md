@@ -253,22 +253,9 @@ Form Data:
 - Tavily API key (for web search)
 ```
 
-### 2. Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/dhruvsinghal09/Adaptive-Rag.git
-cd AdaptiveRag
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Environment Configuration
+### 2. Environment Configuration
 
 Create a `.env` file in the project root:
 
@@ -290,7 +277,7 @@ MONGODB_URL=mongodb://localhost:27017
 MONGODB_DB_NAME=adaptive_rag
 ```
 
-### 4. Running the Application
+### 3. Running the Application
 
 **Start FastAPI Backend:**
 ```bash
@@ -309,7 +296,7 @@ streamlit run streamlit_app/home.py
 - API Documentation: http://localhost:8000/docs
 - ReDoc Documentation: http://localhost:8000/redoc
 
-### 5. Example Usage
+### 4. Example Usage
 
 **Using the Web Interface:**
 1. Navigate to http://localhost:8501
