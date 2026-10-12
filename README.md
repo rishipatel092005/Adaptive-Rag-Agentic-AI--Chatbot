@@ -40,7 +40,7 @@ The system intelligently adapts its retrieval strategy based on query type, util
 
 ### 🎨 User Interface
 - **Streamlit Web App**: Interactive chat interface with document upload
-- **File Support**: PDF and TXT document uploads
+- **File Support**: PDF, DOCX, and TXT document uploads
 - **Real-time Feedback**: Live chat with instant responses
 
 ### ⚡ API-First Architecture
@@ -60,7 +60,7 @@ The system intelligently adapts its retrieval strategy based on query type, util
 │  ┌──────────────��───────────────────────────────────────��───┐  │
 │  │  Streamlit Web Application                               │  │
 │  │  • Chat Interface                                        │  │
-│  │  • Document Upload (PDF, TXT)                            │  │
+│  │  • Document Upload (PDF, DOCX, TXT)                       │  │
 │  │  • Session Management                                    │  │
 │  └──────────────────────────────────────────────────────────��  │
 └───────────────────────────────────────────��─────────────────────┘
@@ -213,7 +213,7 @@ POST /rag/documents/upload
 X-Description: Brief description of the document
 
 Form Data:
-- file: <PDF or TXT file>
+- file: <PDF, DOCX, or TXT file>
 ```
 
 **Response:**
@@ -227,10 +227,11 @@ Form Data:
 - `X-Description` (string, required): Document description for context
 
 **Parameters:**
-- `file` (file, required): PDF or TXT file to upload (max size: depends on system)
+- `file` (file, required): PDF, DOCX, or TXT file to upload (max size: depends on system)
 
 **Supported Formats:**
 - PDF (.pdf)
+- Word document (.docx)
 - Plain Text (.txt)
 
 **Status Codes:**
@@ -260,8 +261,10 @@ Form Data:
 Create a `.env` file in the project root:
 
 ```env
-# OpenAI Configuration
+# Model configuration
 OPENAI_API_KEY=your_openai_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
 
 # Tavily Search Configuration
 TAVILY_API_KEY=your_tavily_api_key_here
@@ -275,7 +278,17 @@ QDRANT_DOCS_COLLECTION=documents
 # MongoDB Configuration
 MONGODB_URL=mongodb://localhost:27017
 MONGODB_DB_NAME=adaptive_rag
+
+# Authentication (generate a private random value; never commit it)
+JWT_SECRET_KEY=replace_with_a_random_secret_at_least_32_characters_long
 ```
+
+The FastAPI service handles registration and sign-in at `/auth/register` and
+`/auth/login`. Set `JWT_SECRET_KEY` before using authentication; access tokens
+expire after 12 hours. User accounts, conversations, and messages are stored in
+MongoDB. The chat interface uses those APIs for history and does not use browser
+storage as its history database. MongoDB must be reachable for account or chat
+operations. PDF, DOCX, and TXT files are supported by the document upload API.
 
 ### 3. Running the Application
 
@@ -344,11 +357,15 @@ print(response.json())
 #### `config/settings.py`
 ```python
 # Core application settings loaded from environment
-OPENAI_API_KEY           # OpenAI API authentication
-TAVILY_API_KEY          # Web search functionality
+OPENAI_API_KEY           # Embeddings
+GROQ_API_KEY             # Chat and extraction models
+GROQ_MODEL               # Optional Groq model override
+TAVILY_API_KEY            # Web search functionality
 QDRANT_URL              # Vector database endpoint
 QDRANT_API_KEY          # Vector database authentication
-MONGODB_URL             # Chat history database
+MONGODB_URL              # Accounts and persistent chat history
+MONGODB_DB_NAME           # MongoDB database name
+JWT_SECRET_KEY            # Private signing key (at least 32 characters)
 ```
 
 #### `config/prompts.yaml`
@@ -552,4 +569,3 @@ A: Yes, remove Tavily dependency. Queries will use index or general LLM only.
 - [ ] Real-time collaboration
 - [ ] Analytics dashboard
 - [ ] Cost optimization
-

@@ -4,9 +4,11 @@ Main FastAPI application entry point.
 
 from fastapi import FastAPI
 
+from src.api.auth_routes import router as auth_router
 from src.api.routes import router
 
 app = FastAPI(title="Adaptive RAG API")
+app.include_router(auth_router)
 app.include_router(router)
 app.state.description_ = ""
 

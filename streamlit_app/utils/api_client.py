@@ -1,158 +1,111 @@
-"""
-API client for communicating with backend services.
-"""
+"""Typed-by-convention HTTP client for the FastAPI backend."""
 
-import logging
 import os
 
 import requests
 
-logger = logging.getLogger(__name__)
-
-# Backend service URLs
-RUST_BASE_URL = "http://localhost:8080/api"
-PYTHON_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+TIMEOUT_SECONDS = 60
 
 
-def create_user(username: str, password: str, api_token: str) -> bool:
-    """
-    Create a new user account.
+class ApiError(Exception):
+    """A readable error returned by the application API."""
 
-    Args:
-        username: Username for the new account.
-        password: Password for the new account.
-        api_token: API token for authentication.
+    def __init__(self, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
 
-    Returns:
-        True if user creation succeeds, False otherwise.
-    """
-    headers = {
-        "X-API-TOKEN": api_token,
-        "Content-Type": "application/json"
-    }
-    logger.info("API Token received: %s", api_token)
 
+def _request(method: str, path: str, token: str | None = None, **kwargs):
+    headers = kwargs.pop("headers", {})
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     try:
-        response = requests.post(
-            f"{RUST_BASE_URL}/create_user",
-            json={"username": username, "password": password},
+        response = requests.request(
+            method,
+            f"{API_BASE_URL}{path}",
             headers=headers,
+            timeout=TIMEOUT_SECONDS,
+            **kwargs,
         )
+    except requests.RequestException as exc:
+        raise ApiError("Cannot reach the API. Check that the backend is running.") from exc
 
-        logger.info("Calling /create_user, status code: %s", response.status_code)
-
-        if response.status_code == 200:
-            try:
-                logger.debug("Create user response: %s", response.json())
-            except ValueError:
-                logger.warning("Create user returned non-JSON response")
-            return True
-        else:
-            logger.error(
-                "Create user failed: %s - %s",
-                response.status_code,
-                response.text
-            )
-            return False
-
-    except requests.RequestException as e:
-        logger.exception("Request to /create_user failed: %s", e)
-        return False
-
-
-def login_user(username: str, password: str, api_token: str) -> dict:
-    """
-    Authenticate user login.
-
-    Args:
-        username: Username to log in.
-        password: Password for the user.
-        api_token: API token for authentication.
-
-    Returns:
-        Response dictionary with JWT token if successful, None otherwise.
-    """
-    headers = {
-        "X-API-TOKEN": api_token,
-        "Content-Type": "application/json"
-    }
-    response = requests.post(
-        f"{RUST_BASE_URL}/login",
-        json={"username": username, "password": password},
-        headers=headers,
-    )
-    logger.info("Calling /login, status code: %s", response.json())
-
-    if response.status_code == 200:
+    if response.status_code >= 400:
+        try:
+            detail = response.json().get("detail", "The request could not be completed.")
+        except ValueError:
+            detail = "The request could not be completed."
+        if response.status_code == 401:
+            detail = "Your session expired. Please sign in again."
+        raise ApiError(str(detail), response.status_code)
+    if response.status_code == 204:
+        return None
+    try:
         return response.json()
-
-    return None
-
-
-def get_api_token() -> str:
-    """
-    Get an API token for authentication.
-
-    Returns:
-        API token string if successful, None otherwise.
-    """
-    response = requests.post(f"{RUST_BASE_URL}/init")
-    logger.info("Calling /init, status code: %s", response.json())
-
-    if response.status_code == 200:
-        return response.json()["api_token"]
-
-    return None
+    except ValueError as exc:
+        raise ApiError("The API returned an invalid response.", response.status_code) from exc
 
 
-def query_backend(query: str, session_id: str) -> str:
-    """
-    Send a query to the RAG backend.
+def register(username: str, password: str) -> dict:
+    return _request("POST", "/auth/register", json={"username": username, "password": password})
 
-    Args:
-        query: The user's query text.
-        session_id: Session identifier for tracking conversation.
 
-    Returns:
-        Response text from the backend or error message.
-    """
-    url = f"{PYTHON_BASE_URL}/rag/query"
-    print(f"[query_backend] Calling: {url}")
+def login(username: str, password: str) -> dict:
+    return _request("POST", "/auth/login", json={"username": username, "password": password})
 
-    response = requests.post(
-        url,
-        json={"query": query, "session_id": session_id},
-        allow_redirects=False
+
+def create_guest_session() -> dict:
+    return _request("POST", "/auth/guest")
+
+
+def get_current_user(token: str) -> dict:
+    return _request("GET", "/auth/me", token)
+
+
+def logout(token: str) -> None:
+    _request("POST", "/auth/logout", token)
+
+
+def list_conversations(token: str, search: str = "") -> list[dict]:
+    params = {"search": search} if search else None
+    return _request("GET", "/conversations", token, params=params)
+
+
+def create_conversation(token: str, title: str = "New chat") -> dict:
+    return _request("POST", "/conversations", token, json={"title": title})
+
+
+def load_conversation(token: str, conversation_id: str) -> dict:
+    return _request("GET", f"/conversations/{conversation_id}", token)
+
+
+def rename_conversation(token: str, conversation_id: str, title: str) -> dict:
+    return _request("PATCH", f"/conversations/{conversation_id}", token, json={"title": title})
+
+
+def delete_conversation(token: str, conversation_id: str) -> dict:
+    return _request("DELETE", f"/conversations/{conversation_id}", token)
+
+
+def send_query(token: str, conversation_id: str, query: str) -> dict:
+    return _request(
+        "POST",
+        "/rag/query",
+        token,
+        json={"conversation_id": conversation_id, "query": query},
     )
 
-    if response.status_code == 200:
-        return response.json()["result"]["content"]
-    else:
-        return f"Error: {response.status_code} - {response.text}"
+
+def upload_document(token: str, file, description: str) -> dict:
+    return _request(
+        "POST",
+        "/rag/documents/upload",
+        token,
+        headers={"X-Description": description},
+        files={"file": (file.name, file.getvalue(), file.type or "application/octet-stream")},
+    )
 
 
-def document_upload_rag(file, description: str) -> bool:
-    """
-    Upload a document to the RAG system.
-
-    Args:
-        file: File object to upload.
-        description: Description of the document.
-
-    Returns:
-        True if upload succeeds, False otherwise.
-    """
-    headers = {
-        "X-Description": description
-    }
-    url = f"{PYTHON_BASE_URL}/rag/documents/upload"
-
-    if file:
-        files = {"file": (file.name, file, file.type)}
-        response = requests.post(url, files=files, headers=headers)
-        print(response)
-
-        if response.status_code == 200:
-            return True
-
-    return False
+def list_documents(token: str) -> list[dict]:
+    return _request("GET", "/rag/documents", token)

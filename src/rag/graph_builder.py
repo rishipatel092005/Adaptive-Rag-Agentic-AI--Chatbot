@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 from langgraph.constants import START, END
 from langgraph.graph.state import StateGraph
 
-from src.rag.reAct_agent import agent_executor
+from src.rag.reAct_agent import get_agent_executor
 from src.rag.retriever_setup import get_retriever
 from src.config.settings import Config
 from src.llms.openai import llm
@@ -32,7 +32,8 @@ def query_classifier(state: State):
         dict: Updated state with route and latest_query.
     """
     question = state["messages"][-1].content
-    retriever = get_retriever()
+    user_id = state.get("user_id")
+    retriever = get_retriever(user_id=user_id)
     context = retriever.invoke(question)
     print("docs received from Qdrant")
     print(context)
@@ -47,7 +48,23 @@ def query_classifier(state: State):
     print("result received is in query classifier")
     print(result.route)
 
-    return {"messages": state["messages"], "route": result.route, "latest_query": question}
+    citations = []
+    if result.route == "index":
+        seen = set()
+        for document in context:
+            source = document.metadata.get("source")
+            page = document.metadata.get("page")
+            citation = (source, page)
+            if source and citation not in seen:
+                seen.add(citation)
+                citations.append({"source": source, "page": page})
+
+    return {
+        "messages": state["messages"],
+        "route": result.route,
+        "latest_query": question,
+        "citations": citations,
+    }
 
 
 def general_llm(state: State):
@@ -77,7 +94,7 @@ def retriever_node(state: State):
         dict: Updated messages with tool calls.
     """
     messages = state["latest_query"]
-    result = agent_executor.invoke({"input": messages})
+    result = get_agent_executor(state.get("user_id")).invoke({"input": messages})
 
     # Extract tool calls
     intermediate_steps = result.get("intermediate_steps", [])
@@ -217,4 +234,3 @@ graph.add_edge("generate", END)
 graph.add_edge("general_llm", END)
 
 builder = graph.compile()
-

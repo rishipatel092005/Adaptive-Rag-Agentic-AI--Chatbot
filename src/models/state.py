@@ -15,3 +15,5 @@ class State(TypedDict):
     binary_score: Optional[str]
     route: Optional[str]
     latest_query: Optional[str]
+    user_id: Optional[str]
+    citations: Optional[list[dict]]

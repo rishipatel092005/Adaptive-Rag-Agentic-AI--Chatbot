@@ -40,13 +40,13 @@ def retriever_chain(chunks: list[Document]):
         #     api_key=settings.QDRANT_API_KEY,
         #     collection_name=settings.CODE_COLLECTION,
         # )
-        vectorstore = FAISS.from_documents(
-            documents=chunks,
-            embedding=embeddings
-        )
-
-        # Store the vectorstore globally so get_retriever() can access it
-        _faiss_vectorstore = vectorstore
+        if _faiss_vectorstore is None:
+            _faiss_vectorstore = FAISS.from_documents(
+                documents=chunks,
+                embedding=embeddings,
+            )
+        else:
+            _faiss_vectorstore.add_documents(chunks)
 
         print("FAISS vector store initialized with documents")
         print(f"Vectorstore contains {len(chunks)} document chunks")
@@ -56,7 +56,7 @@ def retriever_chain(chunks: list[Document]):
         return False
 
 
-def get_retriever():
+def get_retriever(user_id: str | None = None):
     """
     Get a retriever tool connected to the FAISS vector store.
 
@@ -84,7 +84,10 @@ def get_retriever():
 
         # Use the global vectorstore if it exists (documents have been uploaded)
         if _faiss_vectorstore is not None:
-            retriever = _faiss_vectorstore.as_retriever()
+            search_kwargs = {"k": 4}
+            if user_id is not None:
+                search_kwargs["filter"] = {"user_id": user_id}
+            retriever = _faiss_vectorstore.as_retriever(search_kwargs=search_kwargs)
             print("Using existing FAISS vectorstore with uploaded documents")
         else:
             # No documents uploaded yet, create dummy for initialization
@@ -102,18 +105,10 @@ def get_retriever():
             )
             retriever = _faiss_vectorstore.as_retriever()
 
-        # Load document description
-        if os.path.exists("description.txt"):
-            with open("description.txt", "r", encoding="utf-8") as f:
-                description = f.read()
-        else:
-            description = None
-
         retriever_tool = create_retriever_tool(
             retriever,
             "retriever_customer_uploaded_documents",
-            f"Use this tool **only** to answer questions about: {description}\n"
-            "Don't use this tool to answer anything else."
+            "Use this tool only to answer questions about documents uploaded by the current user."
         )
 
         return retriever_tool

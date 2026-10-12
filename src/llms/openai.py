@@ -1,13 +1,16 @@
 """
-OpenAI LLM initialization and configuration.
+LLM initialization and configuration.
 """
 
 import os
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "")
 
-llm = ChatOpenAI(model="gpt-4o")
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY", "")
+
+llm = ChatGroq(
+    model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+)

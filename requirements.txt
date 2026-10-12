@@ -21,3 +21,5 @@ streamlit
 requests
 langchain-qdrant
 python-multipart
+neo4j
+python-docx
