@@ -7,10 +7,18 @@
 
 ## 📋 Overview
 
-**Adaptive RAG** is an intelligent, end-to-end Retrieval-Augmented Generation (RAG) system powered by agentic AI architecture. It combines dynamic query routing, intelligent document retrieval, and advanced LLM capabilities to provide accurate, context-aware answers to user queries.
 
-The system intelligently adapts its retrieval strategy based on query type, utilizing indexed documents, general knowledge, or real-time web search to generate comprehensive responses. Built with a modular architecture using LangGraph for workflow orchestration and multiple storage backends for scalability.
 
+**Adaptive RAG** is an agentic AI-powered knowledge assistant that goes beyond traditional RAG through dynamic retrieval and intelligent query routing.
+
+- **Agentic RAG:** LangGraph orchestrates query classification and adaptive workflow selection.
+- **Hybrid Search:** Combines semantic vector retrieval with keyword-based search.
+- **GraphRAG:** Leverages entity relationships through Neo4j for graph-based knowledge retrieval.
+- **Query Rewriting:** Refines queries to improve retrieval relevance.
+- **Relevance Grading:** Evaluates retrieved evidence before answer generation.
+- **Web-Augmented RAG:** Integrates Tavily search for real-time external information.
+- **LLM Integration:** Uses Groq-hosted LLMs for context-aware response generation.
+- **Scalable Architecture:** Combines FastAPI, Streamlit, Qdrant, Neo4j, and MongoDB for APIs, UI, retrieval, graph storage, and persistence.
 ---
 
 ## 🎯 Key Features
