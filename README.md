@@ -23,38 +23,42 @@
 
 ## 🎯 Key Features
 
+## ✨ Key Features
+
 ### 🧠 Intelligent Query Routing
-- **Adaptive Classification**: Automatically routes queries to the most appropriate processing pipeline
-- **Three Query Types**:
-  - **Index**: Queries answerable from uploaded documents
-  - **General**: Queries answerable with general knowledge
-  - **Search**: Queries requiring real-time web search
+- **Adaptive Classification:** Routes queries to the most suitable processing workflow.
+- **Multi-Path Retrieval:** Supports document-based queries, general knowledge questions, and web search.
 
 ### 📚 Advanced RAG Pipeline
-- **Document Processing**: Intelligent chunking and embedding of documents
-- **Vector Search**: Fast similarity-based retrieval using Qdrant
-- **Relevance Grading**: Automatic evaluation of retrieved documents
-- **Query Rewriting**: Optimizes queries for better retrieval results
+- **Document Ingestion:** Extracts and chunks uploaded documents for retrieval.
+- **Vector Search:** Uses Qdrant for semantic similarity search.
+- **Hybrid Search:** Combines semantic vector retrieval with keyword-based search.
+- **Query Rewriting:** Refines queries to improve retrieval relevance.
+- **Relevance Grading:** Evaluates retrieved documents before answer generation.
+
+### 🕸️ GraphRAG & Knowledge Graphs
+- **Knowledge Graph Construction:** Extracts entities and relationships from text.
+- **Neo4j Integration:** Stores connected knowledge for graph-based retrieval.
+- **Relationship-Based Retrieval:** Retrieves relevant connections between entities to complement traditional vector search.
 
 ### 🤖 Agentic AI Architecture
-- **Multi-Agent System**: Specialized agents for different tasks
-- **ReAct Framework**: Reasoning and Acting pattern for intelligent decision-making
-- **Tool Integration**: Seamless integration with retrieval tools and web search
+- **LangGraph Orchestration:** Coordinates query classification, routing, retrieval, and response generation.
+- **Tool Integration:** Connects retrieval workflows and Tavily web search.
+- **Adaptive Workflows:** Selects processing paths based on query requirements.
 
-### 💾 State Management
-- **MongoDB Backend**: Persistent chat history and session management
-- **Session Tracking**: Individual conversation contexts per user
-- **Memory Management**: Full conversation context retention
+### 💾 State Management & Persistence
+- **MongoDB Integration:** Supports persistent conversation history and application data.
+- **Session Management:** Maintains conversation context across interactions.
 
 ### 🎨 User Interface
-- **Streamlit Web App**: Interactive chat interface with document upload
-- **File Support**: PDF, DOCX, and TXT document uploads
-- **Real-time Feedback**: Live chat with instant responses
+- **Streamlit Web App:** Interactive chat interface with document uploads.
+- **Multi-Format Support:** Supports PDF, DOCX, and TXT files.
+- **Interactive Responses:** Displays answers through a conversational interface.
 
 ### ⚡ API-First Architecture
-- **FastAPI Backend**: High-performance REST API
-- **Async Operations**: Non-blocking database and API calls
-- **RESTful Endpoints**: Well-defined API contracts
+- **FastAPI Backend:** Provides REST endpoints for application functionality.
+- **Modular Design:** Separates API, retrieval, LLM, and storage components.
+- **External Integrations:** Connects LLM inference, databases, and web search services.
 
 ---
 
@@ -181,56 +185,44 @@ flowchart TB
 
 ## 📦 Project Structure
 
-```
-AdaptiveRag/
+## 📁 Project Structure
+
+```text
+Adaptive-RAG-Agentic-AI-Chatbot/
 ├── src/                              # Main source code
-│   ��── main.py                       # FastAPI application entry point
+│   ├── main.py                       # FastAPI application entry point
 │   ├── api/                          # API routes and endpoints
-│   │   └── routes.py                 # RAG query and document upload endpoints
-│   ├── config/                       # Configuration management
-│   │   ├── settings.py               # Application settings
-│   │   └── prompts.yaml              # LLM prompts and system messages
-│   ├── core/                         # Core utilities
-│   │   ├── config.py                 # Core configuration
-│   │   └── logger.py                 # Logging setup
-│   ├── db/                           # Database layer
-│   │   └── mongo_client.py           # MongoDB client initialization
-│   ├── llms/                         # Language model integrations
-│   │   └── openai.py                 # OpenAI ChatGPT-4o initialization
-│   ├── memory/                       # Chat memory management
-│   │   ├── chat_history_mongo.py     # MongoDB-backed chat history
-│   │   └── chathistory_in_memory.py  # In-memory chat history (fallback)
-│   ├── models/                       # Data models and schemas
-│   │   ├── state.py                  # Graph state definition
-│   │   ├── query_request.py          # Query request schema
-│   │   ├── grade.py                  # Relevance grade model
-│   │   ├── route_identifier.py       # Route classification model
-│   │   └── verification_result.py    # Answer verification model
+│   ├── config/                       # Application settings and prompts
+│   ├── core/                         # Core utilities and logging
+│   ├── db/                           # Database connections
+│   ├── llms/                         # LLM provider integrations
+│   ├── memory/                       # Conversation history and memory
+│   ├── models/                       # Request schemas and graph state
 │   ├── rag/                          # RAG pipeline implementation
-│   │   ├── graph_builder.py          # LangGraph workflow construction
-│   │   ├── nodes.py                  # Graph node implementations
-│   │   ├── retriever_setup.py        # Vector store and retriever setup
-│   │   ├── document_upload.py        # Document processing and upload
-│   │   └── reAct_agent.py            # ReAct agent setup
-│   └── tools/                        # Utility tools and functions
-│       ├── common_tools.py           # Shared utility functions
-│       └── graph_tools.py            # Graph routing and decision tools
+│   │   ├── graph_builder.py          # LangGraph workflow orchestration
+│   │   ├── nodes.py                  # RAG workflow nodes
+│   │   ├── retriever_setup.py        # Vector retriever configuration
+│   │   ├── document_upload.py        # Document ingestion and processing
+│   │   ├── reAct_agent.py            # ReAct agent implementation
+│   │   └── graphrag/                 # GraphRAG implementation
+│   │       ├── schema.py             # Graph entity and relationship schemas
+│   │       ├── entity_extractor.py   # Entity and relationship extraction
+│   │       ├── knowledge_graph.py    # Knowledge graph construction
+│   │       ├── graph_store.py        # Neo4j graph storage
+│   │       ├── graph_retriever.py    # Graph-based retrieval
+│   │       └── graph_utils.py        # Graph utility functions
+│   └── tools/                        # Shared tools and routing utilities
 │
-├── streamlit_app/                    # Streamlit web application
-│   ├── home.py                       # Authentication and login page
-│   ├── pages/                        # Multi-page application
-│   │   └── chat.py                   # Chat interface and document upload
-│   └── utils/                        # Streamlit utilities
-│       └── api_client.py             # Backend API client
+├── streamlit_app/                    # Streamlit user interface
+│   ├── home.py                       # Authentication and home page
+│   ├── pages/                        # Application pages
+│   └── utils/                        # Frontend API client and utilities
 │
-├── README.md                         # This file
+├── tests/                            # Automated and integration tests
+├── README.md                         # Project overview and documentation
 ├── requirements.txt                  # Python dependencies
-├── CODE_STYLE_GUIDE.md               # Code formatting standards
-├── QUICK_REFERENCE.md                # Quick reference guide
-├── README_FORMATTING.md              # Formatting documentation
-├── VERIFICATION_CHECKLIST.md         # QA verification checklist
-├── FORMATTING_SUMMARY.md             # Summary of code formatting
-└── DOCUMENTATION_INDEX.md            # Documentation navigation index
+├── .gitignore                        # Git exclusions
+└── .env.example                      # Environment variable template
 ```
 
 ---
