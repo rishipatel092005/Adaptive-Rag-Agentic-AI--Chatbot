@@ -52,48 +52,111 @@ The system intelligently adapts its retrieval strategy based on query type, util
 
 ## 🏗️ Architecture
 
-### System Components
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Interface                          │
-│  ┌──────────────��───────────────────────────────────────��───┐  │
-│  │  Streamlit Web Application                               │  │
-│  │  • Chat Interface                                        │  │
-│  │  • Document Upload (PDF, DOCX, TXT)                       │  │
-│  │  • Session Management                                    │  │
-│  └──────────────────────────────────────────────────────────��  │
-└───────────────────────────────────────────��─────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────��────────────────┐
-│                       FastAPI Backend                           │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  REST API Endpoints                                      │  │
-│  │  • POST /rag/query                                       │  │
-│  │  • POST /rag/documents/upload                            │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    LangGraph Orchestration                      │
-│  ┌─────────┐  ┌──────────┐  ┌─────────┐  ┌──────────┐         │
-│  │ Query   │→ │ Classify │→ │ Router  │→ │ Pipeline │         │
-│  │ Analyze │  │ Query    │  │ Output  │  │ Exec     │         │
-│  └─────────┘  └──────────┘  └───��─────┘  └──────────┘         │
-└─────────────────────────────────────────────────────────────────┘
-                            ↓
-        ┌───────��──────────┬────────────────��─┬────────────────┐
-        ↓                  ↓                  ↓                ↓
-   ┌─────────┐       ┌──────────┐      ┌────────────┐   ┌──────────┐
-   │ Retriever│      │ General  │      │ Web Search │   │ Response │
-   │ (Index)  │      │ LLM      │      │ (Tavily)   │   │ Generator│
-   └─────────┘       └──────────┘      └────────────┘   └──────────┘
-        ↓                  ↓                  ↓                ↓
-        └──────────────────┬──────────────────┬────────────────┘
-                           ↓
-            ┌─────────────────────────────────┐
-            │   Response to User               │
-            └─────────────────────────────────┘
+## System Architecture
+
+```mermaid
+flowchart TB
+    U["User"]
+
+    subgraph UI["User Interface"]
+        S["Streamlit Web Application"]
+        CHAT["Chat Interface"]
+        UP["Document Upload<br/>PDF, DOCX, TXT"]
+        SESSION["Session Management"]
+        S --> CHAT
+        S --> UP
+        S --> SESSION
+    end
+
+    subgraph API["FastAPI Backend"]
+        AUTH["Authentication and API Endpoints"]
+        QUERY["RAG Query Endpoint"]
+        DOC["Document Upload Endpoint"]
+    end
+
+    U --> S
+    CHAT --> QUERY
+    UP --> DOC
+    SESSION --> AUTH
+    QUERY --> AUTH
+    DOC --> AUTH
+
+    subgraph INGEST["Document Ingestion Pipeline"]
+        PARSE["Document Parsing"]
+        CHUNK["Text Chunking"]
+        EMBED["Embedding Generation"]
+        ENTITY["Entity and Relationship Extraction"]
+        PARSE --> CHUNK
+        CHUNK --> EMBED
+        CHUNK --> ENTITY
+    end
+
+    DOC --> PARSE
+
+    subgraph STORAGE["Data and Knowledge Storage"]
+        QDRANT[("Qdrant<br/>Vector Database")]
+        NEO4J[("Neo4j Aura<br/>Knowledge Graph")]
+        MONGO[("MongoDB Atlas<br/>Chat History and App Data")]
+    end
+
+    EMBED --> QDRANT
+    ENTITY --> NEO4J
+    AUTH <--> MONGO
+    QUERY <--> MONGO
+
+    subgraph AGENT["LangGraph Agentic RAG Workflow"]
+        ANALYZE["Query Analysis"]
+        CLASSIFY["Query Classification"]
+        ROUTER{"Routing Decision"}
+
+        ANALYZE --> CLASSIFY
+        CLASSIFY --> ROUTER
+
+        HYBRID["Hybrid Retrieval<br/>Vector + Keyword Search"]
+        GRAPH["GraphRAG Retrieval"]
+        WEB["Web Search<br/>Tavily"]
+        GENERAL["General LLM Response"]
+
+        GRADE["Evidence / Relevance Evaluation"]
+        REWRITE["Query Rewriting"]
+        GENERATE["Answer Generation"]
+
+        ROUTER --> HYBRID
+        ROUTER --> GRAPH
+        ROUTER --> WEB
+        ROUTER --> GENERAL
+
+        HYBRID --> GRADE
+        GRAPH --> GRADE
+        WEB --> GRADE
+        GRADE --> REWRITE
+        REWRITE --> HYBRID
+        GRADE --> GENERATE
+        GENERAL --> GENERATE
+    end
+
+    QUERY --> ANALYZE
+    QDRANT --> HYBRID
+    NEO4J --> GRAPH
+
+    subgraph LLM["LLM Layer"]
+        GROQ["Groq-hosted LLM"]
+    end
+
+    GENERATE --> GROQ
+    GROQ --> RESPONSE["Response with Relevant Sources"]
+    RESPONSE --> CHAT
+
+    classDef ui fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef process fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef storage fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef agent fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+
+    class S,CHAT,UP,SESSION ui
+    class PARSE,CHUNK,EMBED,ENTITY,ANALYZE,CLASSIFY,GRADE,REWRITE,GENERATE process
+    class QDRANT,NEO4J,MONGO storage
+    class ROUTER,HYBRID,GRAPH,WEB,GENERAL,GROQ agent
 ```
 
 ### Graph Nodes
